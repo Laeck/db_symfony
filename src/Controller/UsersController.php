@@ -31,9 +31,8 @@ class UsersController extends AbstractController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $user = new Users();
-
-        $user->setName('Louwenn');
-        $user->setEmail('Loulou@yahoo.fr');
+        $user->setName('Nico');
+        $user->setEmail('NicolasB@yahoo.fr');
         $user->setDatecrea(new \DateTime());
 
         // tell Doctrine you want to (eventually) save the Product (no queries yet)
@@ -42,7 +41,7 @@ class UsersController extends AbstractController
         // actually executes the queries (i.e. the INSERT query)
         $entityManager->flush();
 
-        return new Response('ID de la sauvegarde : '.$user->getId());
+        return $this->redirectToRoute('users');
     }
 
     /**

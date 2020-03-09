@@ -8,6 +8,9 @@ use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
+
+use App\Form\UsersType;
 
 class UsersController extends AbstractController
 {
@@ -27,21 +30,39 @@ class UsersController extends AbstractController
     /**
      * @Route("/users/add", name="users_add")
      */
-    public function createUser(): Response
+    public function createUser(Request $request): Response
     {
-        $entityManager = $this->getDoctrine()->getManager();
         $user = new Users();
-        $user->setName('Nico');
-        $user->setEmail('NicolasB@yahoo.fr');
         $user->setDatecrea(new \DateTime());
 
-        // tell Doctrine you want to (eventually) save the Product (no queries yet)
-        $entityManager->persist($user);
+        $form = $this->createForm(UsersType::class, $user);
 
-        // actually executes the queries (i.e. the INSERT query)
-        $entityManager->flush();
+        // Si la requête est en POST
+        if ($request->isMethod('POST')) {
 
-        return $this->redirectToRoute('users');
+            $form->handleRequest($request);
+
+            // On vérifie que les valeurs entrées sont correctes
+            // (Nous verrons la validation des objets en détail dans le prochain chapitre)
+            if ($form->isValid()) {
+              // On enregistre notre objet $article dans la base de données, par exemple
+              $entityManager = $this->getDoctrine()->getManager();
+              $users = $entityManager->getRepository(Users::class)->findAll();
+
+              $entityManager->persist($user);
+              $entityManager->flush();
+      
+              //$request->getSession()->getFlashBag()->add('notice', 'User bien enregistré.');
+                   
+              // On redirige vers la page de visualisation de l'annonce nouvellement créée
+              return $this->redirectToRoute('users', array('users' => $users));
+            }
+
+        }
+
+        return $this->render('users/form.html.twig', array(
+            'form' => $form->createView(),
+        ));
     }
 
     /**
@@ -50,6 +71,7 @@ class UsersController extends AbstractController
     public function showUser($id)
     {
         $em = $this->getDoctrine();
+        
         $user = $em->getRepository(Users::class)->find($id);
 
         if (!$user) {
@@ -62,7 +84,7 @@ class UsersController extends AbstractController
         // in the template, print things with {{ product.name }}
         return $this->render('users/show.html.twig', ['user' => $user]);
     }
-    
+
     /**
      * @Route("/users/edit/{id}")
      */
@@ -81,6 +103,7 @@ class UsersController extends AbstractController
 
         // ETAPE 3 : Modifier les champs que l'on souhaite et on persiste en bdd avec flush()
         $user->setName('James Bond');
+        $user->setDatemaj(new \DateTime());
         $entityManager->flush();
 
         // ETAPE 4 : On envoie vers la vue
